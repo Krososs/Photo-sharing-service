@@ -1,17 +1,11 @@
 package pl.sk.photosharingservice.model;
 
-
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
-
+import lombok.*;
 import javax.persistence.*;
 
 @Entity
 @Table(name="images")
-@Getter
-@Setter
+@Data
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,9 +21,10 @@ public class Image {
     private String description;
 
 
-    public Image(Long ownerId, String name){
+    public Image(Long ownerId, String name, String description){
         this.ownerId =ownerId;
         this.name=name;
+        this.description=description;
     }
 
     public Image(){}

@@ -2,7 +2,6 @@ package pl.sk.photosharingservice.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.tools.jconsole.JConsoleContext;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import pl.sk.photosharingservice.model.AppUser;
 import pl.sk.photosharingservice.repository.UserRepository;
-import pl.sk.photosharingservice.model.User;
 import pl.sk.photosharingservice.service.FollowerService;
 import pl.sk.photosharingservice.service.ImageService;
 import pl.sk.photosharingservice.service.UserService;
@@ -44,19 +43,19 @@ public class UserController {
         System.out.println("Zapytanie użytkownika "+userId+" o użytkownika " + ownerId);
         JSONObject pageData = new JSONObject();
 
-        User user = userService.getUserById(Long.valueOf(ownerId).longValue()).get();
+        AppUser appUser = userService.getUserById(Long.valueOf(ownerId).longValue()).get();
         Boolean followed = followerService.checkIfFollowed(Long.valueOf(userId).longValue(),Long.valueOf(ownerId).longValue());
         Long posts = imageService.getUserPhotosCount(Long.valueOf(ownerId).longValue());
 
         Long followers = followerService.getFollowersCount(Long.valueOf(ownerId).longValue());
         Long following = followerService.getFollowingCount(Long.valueOf(ownerId).longValue());
 
-        pageData.put("username", user.getUsername());
+        pageData.put("username", appUser.getUsername());
         pageData.put("posts", posts);
         pageData.put("followed", followed);
         pageData.put("followers", followers);
         pageData.put("following", following);
-        pageData.put("description", user.getDescription());
+        pageData.put("description", appUser.getDescription());
 
 
         return new ResponseEntity<>(pageData.toMap(), HttpStatus.OK);
@@ -76,15 +75,16 @@ public class UserController {
 
 
     @PostMapping("/users/register")
-    public ResponseEntity registerUser(@RequestBody User user){
+    public ResponseEntity registerUser(@RequestBody AppUser appUser){
 
-        if(!userService.findUser(user)){
+        if(!userService.findUser(appUser)){
             return ResponseEntity.ok("Użytkownik o podanym nicku już istnieje");
         }
 
         System.out.println("USER REGISTERED");
-        User newUser = userService.Create(user);
-        return  ResponseEntity.ok(newUser);
+        System.out.println(appUser);
+        AppUser newAppUser = userService.Create(appUser);
+        return  ResponseEntity.ok(newAppUser);
     }
 
     @PostMapping("/users/update/description")
@@ -94,25 +94,25 @@ public class UserController {
         return  ResponseEntity.ok("k");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody User user) throws JsonProcessingException {
-
-
-        if(userService.findUser(user)){
-            return new ResponseEntity<>("Niepoprawny login",HttpStatus.UNAUTHORIZED);
-        }
-
-        User dbUser = userService.getUserByUsername(user);
-
-        if(!passwordEncoder.matches(user.getPassword(), dbUser.getPassword())){
-            System.out.println("Niepoprawne hasło");
-            System.out.println(user.getPassword());
-            System.out.println(dbUser.getPassword());
-            return new ResponseEntity<>("Incorrect password",HttpStatus.UNAUTHORIZED);
-        }
-        return new ResponseEntity<>(dbUser.getId().toString(),HttpStatus.OK);
-
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<String> login(@RequestBody User user) throws JsonProcessingException {
+//
+//
+//        if(userService.findUser(user)){
+//            return new ResponseEntity<>("Niepoprawny login",HttpStatus.UNAUTHORIZED);
+//        }
+//
+//        User dbUser = userService.getUserByUsername(user);
+//
+//        if(!passwordEncoder.matches(user.getPassword(), dbUser.getPassword())){
+//            System.out.println("Niepoprawne hasło");
+//            System.out.println(user.getPassword());
+//            System.out.println(dbUser.getPassword());
+//            return new ResponseEntity<>("Incorrect password",HttpStatus.UNAUTHORIZED);
+//        }
+//        return new ResponseEntity<>(dbUser.getId().toString(),HttpStatus.OK);
+//
+//    }
 
 
 

@@ -12,9 +12,8 @@ import java.util.Collections;
 
 @Entity
 @Table(name="users")
-@Getter
-@Setter
-public class User implements UserDetails {
+@Data
+public class AppUser implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,14 +29,14 @@ public class User implements UserDetails {
 
     private String email;
 
-    public User(String username, String password, String role, String email){
+    public AppUser(String username, String password, String role, String email){
         this.username=username;
         this.password=password;
         this.role=role;
         this.email=email;
     }
 
-    public User(){
+    public AppUser(){
 
     }
 

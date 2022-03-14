@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import pl.sk.photosharingservice.model.Image;
-import pl.sk.photosharingservice.model.User;
 import pl.sk.photosharingservice.repository.ImageRepository;
 
 import java.io.IOException;
@@ -23,8 +22,9 @@ public class ImageService {
     }
 
 
-    public void Upload(MultipartFile file, Long ownerId){
-        Image image = new Image(ownerId, file.getOriginalFilename().toString());
+    public void Upload(MultipartFile file, Long ownerId, String description){
+
+        Image image = new Image(ownerId, file.getOriginalFilename().toString(), description);
         try {
             image.setSource(Base64.getEncoder().encodeToString(file.getBytes()));
         } catch (IOException e) {

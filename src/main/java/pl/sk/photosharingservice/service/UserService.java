@@ -1,20 +1,19 @@
 package pl.sk.photosharingservice.service;
 
 
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import pl.sk.photosharingservice.model.User;
+import pl.sk.photosharingservice.model.AppUser;
 import pl.sk.photosharingservice.repository.UserRepository;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+
+import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -32,27 +31,27 @@ public class UserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User Create(User user){
-        user.setRole("ROLE_USER");
-        user.setPassword( passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
-        return user;
+    public AppUser Create(AppUser appUser){
+        appUser.setRole("ROLE_USER");
+        appUser.setPassword( passwordEncoder.encode(appUser.getPassword()));
+        AppUser savedAppUser = userRepository.save(appUser);
+        return appUser;
     }
 
 
     public JSONArray getUsersByPhrase(String phrase){
-        List<User> all = userRepository.findAll();
+        List<AppUser> all = userRepository.findAll();
 
         JSONArray users= new JSONArray();
 
-        for(User user: all){
-            if(user.getUsername().toLowerCase().contains(phrase.toLowerCase())){
-                System.out.println(user.getUsername());
+        for(AppUser appUser : all){
+            if(appUser.getUsername().toLowerCase().contains(phrase.toLowerCase())){
+                System.out.println(appUser.getUsername());
                 System.out.println(phrase);
 
                 JSONObject _user= new JSONObject();
-                _user.put("username", user.getUsername());
-                _user.put("id", user.getId());
+                _user.put("username", appUser.getUsername());
+                _user.put("id", appUser.getId());
                 users.put(_user);
                 //todo zdjęcie profilowe
             }
@@ -63,15 +62,15 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public User getUserByUsername(User user){
+    public AppUser getUserByUsername(AppUser user){
         return userRepository.findByUsername(user.getUsername());
     }
 
-    public Optional<User> getUserById(Long id) {return userRepository.findById(id);}
+    public Optional<AppUser> getUserById(Long id) {return userRepository.findById(id);}
 
     //check if username is taken
-    public boolean findUser(User user){
-        if(userRepository.findByUsername(user.getUsername())==null)
+    public boolean findUser(AppUser appUser){
+        if(userRepository.findByUsername(appUser.getUsername())==null)
             return true;
         return false;
     }
@@ -79,7 +78,19 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username);
+        AppUser appUser = userRepository.findByUsername(username);
+        if(appUser == null){
+            System.out.println("User not found");
+            throw new UsernameNotFoundException("User not found");
+        }else{
+            System.out.println("User found");
+        }
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        //todo user roles as an array
+
+        authorities.add(new SimpleGrantedAuthority(appUser.getRole()));
+
+        return new org.springframework.security.core.userdetails.User(appUser.getUsername(), appUser.getPassword(),authorities);
     }
 
 

@@ -1,16 +1,11 @@
 package pl.sk.photosharingservice.model;
 
-
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-
+import lombok.*;
 import javax.persistence.*;
 
 @Entity
 @Table(name="followers")
-@Getter
-@Setter
+@Data
 public class Follower {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

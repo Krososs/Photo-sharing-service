@@ -2,14 +2,13 @@ package pl.sk.photosharingservice.controller;
 
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pl.sk.photosharingservice.model.Image;
-import pl.sk.photosharingservice.model.User;
 import pl.sk.photosharingservice.service.ImageService;
 
 import java.util.List;
@@ -28,15 +27,17 @@ public class ImageController {
     }
 
     @PostMapping("/images/upload")
-    public ResponseEntity uploadImage(@RequestBody MultipartFile file, @RequestParam String ownerId)
+    public ResponseEntity uploadImage(@RequestPart MultipartFile file ,@RequestPart String description, @RequestParam String ownerId)
     {
 
         //Long id = Long.valueOf(ownerId).longValue();
         //System.out.println(id);
         //System.out.println(id.getClass());
-        //System.out.println(description);
-        imageService.Upload(file, Long.valueOf(ownerId).longValue());
-        return ResponseEntity.ok("Jest git");
+
+        System.out.println(description);
+        imageService.Upload(file, Long.valueOf(ownerId).longValue(), description);
+
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 
 
