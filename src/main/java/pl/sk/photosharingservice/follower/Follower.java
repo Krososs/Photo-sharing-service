@@ -1,4 +1,4 @@
-package pl.sk.photosharingservice.model;
+package pl.sk.photosharingservice.follower;
 
 import lombok.*;
 import javax.persistence.*;
@@ -11,11 +11,11 @@ public class Follower {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="user_id")
+    @Column(name="userId")
     @NonNull
     private Long userId;
 
-    @Column(name="target_id")
+    @Column(name="targetId")
     @NonNull
     private Long targetId;
 
