@@ -1,4 +1,4 @@
-package pl.sk.photosharingservice.filter.image;
+package pl.sk.photosharingservice.image;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,13 +30,13 @@ public class ImageService {
             image.setSource(Base64.getEncoder().encodeToString(file.getBytes()));
         } catch (IOException e) {
             e.printStackTrace();
+
         }
         imageRepository.save(image);
     }
 
     public boolean deleteImage(Long imageId, String token){
 
-        //check that user is the owner of the image
         Image image = imageRepository.getById(imageId);
         Long id = appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token));
 

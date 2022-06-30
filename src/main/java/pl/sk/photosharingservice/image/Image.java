@@ -1,4 +1,4 @@
-package pl.sk.photosharingservice.filter.image;
+package pl.sk.photosharingservice.image;
 
 import lombok.*;
 import org.hibernate.annotations.Formula;
@@ -21,8 +21,6 @@ public class Image {
     private String name;
     @NonNull
     private Date releaseDate;
-
-
     @NonNull
     @Formula("(SELECT COUNT(1) FROM likes l WHERE l.image_id = id)")
     private Integer likes;

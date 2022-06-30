@@ -10,10 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pl.sk.photosharingservice.follower.Follower;
-import pl.sk.photosharingservice.filter.image.Image;
+import pl.sk.photosharingservice.image.Image;
 import pl.sk.photosharingservice.follower.FollowerService;
-import pl.sk.photosharingservice.filter.image.ImageService;
-import pl.sk.photosharingservice.like.LikeService;
+import pl.sk.photosharingservice.image.ImageService;
 import pl.sk.photosharingservice.support.*;
 import pl.sk.photosharingservice.support.language.Language;
 import javax.servlet.http.HttpServletRequest;
@@ -32,16 +31,14 @@ public class appUserController {
 
     private final appUserService appUserService;
     private final ImageService imageService;
-    private final LikeService likeService;
     private final FollowerService followerService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public appUserController(appUserService appUserService, FollowerService followerService, ImageService imageService, LikeService likeService, PasswordEncoder passwordEncoder) {
+    public appUserController(appUserService appUserService, FollowerService followerService, ImageService imageService, PasswordEncoder passwordEncoder) {
         this.appUserService = appUserService;
         this.followerService = followerService;
         this.imageService=imageService;
-        this.likeService = likeService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -59,13 +56,11 @@ public class appUserController {
         return new ResponseEntity<>(userInfo.toMap(), HttpStatus.OK);
     }
 
-    //returns info about visited page
     @GetMapping("/users/page")
     public ResponseEntity getUserPageData(@RequestParam(name = "ownerId")  String ownerId, @RequestHeader("authorization") String token) {
         return new ResponseEntity<>(appUserService.getUserPageData(ownerId,token).toMap(), HttpStatus.OK);
     }
 
-    //returns main "wall"
     @GetMapping("/users/home")
     public ResponseEntity getUserHomePage(@RequestHeader("authorization") String token) {
 
@@ -74,7 +69,6 @@ public class appUserController {
 
         List<Follower> following = followerService.getFollowing(appUser.getId()); //list of people that user is following
         List<Image> userHomePageData = new ArrayList<>(); //list of images
-
 
         for (Follower f: following){
 
@@ -100,13 +94,9 @@ public class appUserController {
             post.put("image", i);
 
             pageData.put(post);
-
         }
-
         return  ResponseEntity.ok(pageData.toList());
-
     }
-
 
     @GetMapping("/users/search")
     public ResponseEntity<?> getUsersByPhrase(@RequestParam(name = "phrase") String phrase) {
@@ -138,7 +128,6 @@ public class appUserController {
                 error.put("error_message",exception.getMessage());
                 response.setContentType(APPLICATION_JSON_VALUE);
                 new ObjectMapper().writeValue(response.getOutputStream(), error);
-
             }
 
         }else{
@@ -150,11 +139,9 @@ public class appUserController {
     @PostMapping("/users/register")
     public ResponseEntity<?> registerUser(@ModelAttribute appUser appUser, @RequestHeader("language") String language) throws  ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-
         Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
         JSONObject error = new JSONObject();
 
-        //check username
         if(!ValidationUtil.checkUsername(appUser.getUsername())){
             error.put("error", WRONG_USERNAME.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
@@ -163,7 +150,7 @@ public class appUserController {
             error.put("error", USERNAME_TAKEN.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
         }
-        //check password
+
         if (appUser.getPassword()==null || appUser.getPassword().length()==0){
             error.put("error", WRONG_PASSWORD.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
@@ -180,7 +167,6 @@ public class appUserController {
             error.put("error", PASSWORD_CONTAINS_NAME.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
         }
-        //check email
         if(!ValidationUtil.checkEmail(appUser.getEmail())){
             error.put("error", WRONG_EMAIL.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
@@ -189,7 +175,6 @@ public class appUserController {
             error.put("error", EMAIL_TAKEN.translate(l));
             return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
         }
-
 
         appUser newAppUser = appUserService.create(appUser);
 
@@ -239,10 +224,6 @@ public class appUserController {
 
         String username = AuthUtil.getUsernameFromToken(token);
         appUser appUser = appUserService.getUserByUsername(username);
-
-        System.out.println(oldPassword);
-        System.out.println(newPassword);
-        System.out.println(confirmPassword);
 
         Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
         JSONObject error = new JSONObject();

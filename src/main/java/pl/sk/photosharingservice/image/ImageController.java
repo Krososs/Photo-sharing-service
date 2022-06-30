@@ -1,4 +1,4 @@
-package pl.sk.photosharingservice.filter.image;
+package pl.sk.photosharingservice.image;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +55,6 @@ public class ImageController {
         return new ResponseEntity<>( HttpStatus.OK);
     }
 
-    //get people who liked
     @GetMapping("/images/image/likes")
     public ResponseEntity<?> getUsersWhoLiked(@RequestParam String imageId, @RequestHeader("authorization") String token)
     {
@@ -71,7 +70,6 @@ public class ImageController {
         return ResponseEntity.ok(imageData.toMap());
 
     }
-
 
     @DeleteMapping("/images/delete")
     public ResponseEntity<?> deleteImage(@RequestParam String imageId, @RequestHeader("authorization") String token)

@@ -11,11 +11,9 @@ import java.util.List;
 
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
-
         @Modifying
         @Transactional
         @Query(value="DELETE FROM Like l WHERE l.userId = :userId AND l.imageId = :imageId")
         void Unlike(@Param("userId") Long userId, @Param("imageId")Long imageId);
         List<Like> findByImageId(Long imageId);
-
 }

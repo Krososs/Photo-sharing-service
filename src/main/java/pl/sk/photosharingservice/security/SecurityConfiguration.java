@@ -19,6 +19,7 @@ import pl.sk.photosharingservice.filter.AuthenticationFilter;
 import pl.sk.photosharingservice.filter.AuthorizationFilter;
 import pl.sk.photosharingservice.appUser.appUserService;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 
 @Configuration @EnableWebSecurity @RequiredArgsConstructor
@@ -39,7 +40,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception{
         http.httpBasic().disable();
         http.csrf().disable();
-        http.logout();
+        http.logout(logout -> logout
+                .permitAll()
+                .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK)
+                )
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+        );
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.cors().configurationSource(corsConfigurationSource());
         http.authorizeRequests().antMatchers("/users/token/refresh/**").permitAll();

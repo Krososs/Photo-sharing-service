@@ -1,4 +1,4 @@
-package pl.sk.photosharingservice.filter.image;
+package pl.sk.photosharingservice.image;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

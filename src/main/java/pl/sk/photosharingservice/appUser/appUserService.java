@@ -19,11 +19,9 @@ import java.util.stream.Collectors;
 @Service
 public class appUserService implements UserDetailsService {
 
-
     private final appUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final FollowerService followerService;
-
 
     @Autowired
     public appUserService(appUserRepository appUserRepository, PasswordEncoder passwordEncoder, FollowerService followerService) {
@@ -62,7 +60,6 @@ public class appUserService implements UserDetailsService {
         pageData.put("joiningDate", appUser.getJoiningDate());
 
         return pageData;
-
     }
 
     public List<?> getUsersByPhrase(String phrase){
@@ -72,7 +69,6 @@ public class appUserService implements UserDetailsService {
                 .map(appUser -> appUser.toJson())
                 .collect(Collectors.toList());
     }
-
 
     public appUser getUserByUsername(String username){
         return appUserRepository.findByUsername(username);

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pl.sk.photosharingservice.appUser.appUser;
 import pl.sk.photosharingservice.appUser.appUserService;
-import pl.sk.photosharingservice.filter.image.ImageRepository;
+import pl.sk.photosharingservice.image.ImageRepository;
 
 import java.util.ArrayList;
 import java.util.List;
