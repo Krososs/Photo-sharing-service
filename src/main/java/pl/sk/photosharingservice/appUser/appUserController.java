@@ -145,7 +145,7 @@ public class appUserController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @PostMapping("/users/profile/edit")
+    @PatchMapping("/users/profile/edit")
     public ResponseEntity<?> updateProfile(@ModelAttribute appUser appUser, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
         Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
@@ -171,7 +171,7 @@ public class appUserController {
         return new ResponseEntity(data, HttpStatus.OK);
     }
 
-    @PostMapping("users/profile/password/change")
+    @PatchMapping("users/profile/password/change")
     public ResponseEntity<?> changePassword(@RequestPart String oldPassword, @RequestPart String newPassword, @RequestPart String confirmPassword, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
         String username = AuthUtil.getUsernameFromToken(token);
