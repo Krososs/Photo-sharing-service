@@ -1,5 +1,7 @@
 package pl.sk.photosharingservice.image;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.*;
 import org.hibernate.annotations.Formula;
 import javax.persistence.*;
@@ -36,5 +38,17 @@ public class Image {
     }
 
     public Image(){}
+
+    public ObjectNode toJson(){
+        return new ObjectMapper().createObjectNode()
+                .put("id", this.id)
+                .put("ownerId", this.ownerId)
+                .put("source", this.source)
+                .put("name", this.name)
+                .put("likes", this.likes)
+                .put("releaseDate", String.valueOf(this.releaseDate))
+                .put("description", this.description);
+
+    }
 
 }

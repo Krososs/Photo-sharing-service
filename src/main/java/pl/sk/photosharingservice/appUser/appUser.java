@@ -1,18 +1,20 @@
 package pl.sk.photosharingservice.appUser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.*;
 import org.hibernate.annotations.Formula;
-import org.json.JSONObject;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 @Data
 public class appUser implements UserDetails {
 
@@ -27,33 +29,28 @@ public class appUser implements UserDetails {
     private String email;
     @NonNull
     private Date joiningDate;
-
     @NonNull
     @Formula("(SELECT COUNT(1) FROM followers f WHERE f.target_id = id)")
     private Integer followers;
-
     @NonNull
     @Formula("(SELECT COUNT(1) FROM followers f WHERE f.user_id = id)")
     private Integer following;
-
     @NonNull
     @Formula("(SELECT COUNT(1) FROM images i WHERE i.owner_id = id)")
     private Integer posts;
-
     private String role;
     private String profilePicture;
     private String description;
 
-
-    public appUser(){
+    public appUser() {
 
     }
 
-    public appUser(String username, String password, String email){
-        this.username=username;
-        this.password=password;
-        this.email=email;
-        this.joiningDate= new Date();
+    public appUser(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.joiningDate = new Date();
     }
 
     @Override
@@ -61,20 +58,19 @@ public class appUser implements UserDetails {
         return Collections.singleton(new SimpleGrantedAuthority(role));
     }
 
-    public JSONObject toJson(){
-        JSONObject data = new JSONObject();
-        data.put("id", this.id);
-        data.put("username", this.username);
-        data.put("description", this.description);
-        data.put("profilePicture", this.profilePicture);
-
-        return data;
+    public ObjectNode toJson() {
+        return new ObjectMapper().createObjectNode()
+                .put("id", this.id)
+                .put("username", this.username)
+                .put("description", this.description == null ? "" : this.description)
+                .put("profilePicture", this.profilePicture == null ? null : this.profilePicture);
     }
 
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
+
     @Override
     public boolean isAccountNonLocked() {
         return true;

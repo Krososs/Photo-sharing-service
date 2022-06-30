@@ -1,8 +1,9 @@
 package pl.sk.photosharingservice.appUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +16,10 @@ import pl.sk.photosharingservice.follower.FollowerService;
 import pl.sk.photosharingservice.image.ImageService;
 import pl.sk.photosharingservice.support.*;
 import pl.sk.photosharingservice.support.language.Language;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.*;
 
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static pl.sk.photosharingservice.support.ResponseUtil.*;
 
 
@@ -38,14 +35,14 @@ public class appUserController {
     public appUserController(appUserService appUserService, FollowerService followerService, ImageService imageService, PasswordEncoder passwordEncoder) {
         this.appUserService = appUserService;
         this.followerService = followerService;
-        this.imageService=imageService;
+        this.imageService = imageService;
         this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("users/info")
-    public ResponseEntity getUserInfo(@RequestHeader("authorization") String token) {
+    public ResponseEntity<?> getUserInfo(@RequestHeader("authorization") String token) {
 
-        JSONObject userInfo = new JSONObject();
+        ObjectNode userInfo = new ObjectMapper().createObjectNode();
         String username = AuthUtil.getUsernameFromToken(token);
         appUser appUser = appUserService.getUserByUsername(username);
 
@@ -53,207 +50,151 @@ public class appUserController {
         userInfo.put("id", appUser.getId());
         userInfo.put("profilePicture", appUser.getProfilePicture());
 
-        return new ResponseEntity<>(userInfo.toMap(), HttpStatus.OK);
+        return new ResponseEntity<>(userInfo, HttpStatus.OK);
     }
 
     @GetMapping("/users/page")
-    public ResponseEntity getUserPageData(@RequestParam(name = "ownerId")  String ownerId, @RequestHeader("authorization") String token) {
-        return new ResponseEntity<>(appUserService.getUserPageData(ownerId,token).toMap(), HttpStatus.OK);
+    public ResponseEntity<?> getUserPageData(@RequestParam(name = "ownerId") String ownerId, @RequestHeader("authorization") String token) {
+        return new ResponseEntity(appUserService.getUserPageData(ownerId, token), HttpStatus.OK);
     }
 
     @GetMapping("/users/home")
-    public ResponseEntity getUserHomePage(@RequestHeader("authorization") String token) {
+    public ResponseEntity<?> getUserHomePage(@RequestHeader("authorization") String token) {
 
         appUser appUser = appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(token));
-        JSONArray pageData = new JSONArray();
+
+        ObjectNode pageInfo = new ObjectMapper().createObjectNode();
+        ArrayNode posts = pageInfo.putArray("posts");
 
         List<Follower> following = followerService.getFollowing(appUser.getId()); //list of people that user is following
         List<Image> userHomePageData = new ArrayList<>(); //list of images
 
-        for (Follower f: following){
-
-            List<Image> images = imageService.getImagesById(f.getTargetId());
-            for(Image image: images){
-                userHomePageData.add(image);
-            }
-
+        for (Follower f : following) {
+            userHomePageData.addAll(imageService.getImagesById(f.getTargetId()));
         }
-
         Collections.reverse(userHomePageData);
+        for (Image i : userHomePageData) {
 
-        for(Image i: userHomePageData){
-            JSONObject post = new JSONObject();
+            ObjectNode _post = new ObjectMapper().createObjectNode();
 
-            pl.sk.photosharingservice.appUser.appUser owner = appUserService.getUserById(i.getOwnerId()).get();
+            appUser owner = appUserService.getUserById(i.getOwnerId()).get();
 
             boolean liked = imageService.checkIfLiked(appUser.getId(), i.getId());
+            _post.put("username", owner.getUsername());
+            _post.put("profilePhoto", owner.getProfilePicture() == null ? null : owner.getProfilePicture());
+            _post.put("liked", liked);
+            _post.put("image", i.toJson());
 
-            post.put("username", owner.getUsername());
-            post.put("profilePhoto", owner.getProfilePicture()==null ? JSONObject.NULL : owner.getProfilePicture() );
-            post.put("liked", liked);
-            post.put("image", i);
-
-            pageData.put(post);
+            posts.add(_post);
         }
-        return  ResponseEntity.ok(pageData.toList());
+        return ResponseEntity.ok(pageInfo);
     }
 
     @GetMapping("/users/search")
     public ResponseEntity<?> getUsersByPhrase(@RequestParam(name = "phrase") String phrase) {
-        List<Object> _users = new JSONArray(appUserService.getUsersByPhrase(phrase)).toList();
-        return ResponseEntity.ok(_users);
+        List<ObjectNode> _users = appUserService.getUsersByPhrase(phrase);
+        return new ResponseEntity(_users, HttpStatus.OK);
     }
 
-    @GetMapping("/users/token/refresh")
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @GetMapping("users/token/refresh")
+    public ResponseEntity<?> refreshToken(@RequestHeader("authorization") String refreshToken) {
 
-        String authHeader = request.getHeader(AUTHORIZATION);
-        if(authHeader!=null && authHeader.startsWith("e ")){
-            try{
-                String refresh_token = authHeader.substring("e ".length());
-                appUser appUser= appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(refresh_token));
+        if (refreshToken == null || refreshToken.length() == 0)
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
 
-                Map<String, String> tokens = new HashMap<>();
-                tokens.put("acces_token",AuthUtil.getAccesToken(appUser));
-                tokens.put("refresh_token",refresh_token);
+        try {
+            String username = AuthUtil.getUsernameFromToken(refreshToken);
+            appUser user = appUserService.getUserByUsername(username);
 
-                response.setContentType(APPLICATION_JSON_VALUE);
-                new ObjectMapper().writeValue(response.getOutputStream(), tokens);
+            Map<String, String> data = new HashMap<>();
+            data.put("acces_token", AuthUtil.getAccesToken(user));
+            data.put("refresh_token", AuthUtil.getRefreshToken(user));
 
-            }catch (Exception exception){
+            return new ResponseEntity(data, HttpStatus.OK);
 
-                response.setHeader("error", exception.getMessage());
-                response.setStatus(FORBIDDEN.value());
-                Map<String, String> error = new HashMap<>();
-                error.put("error_message",exception.getMessage());
-                response.setContentType(APPLICATION_JSON_VALUE);
-                new ObjectMapper().writeValue(response.getOutputStream(), error);
-            }
-
-        }else{
-            throw new RuntimeException("Refresh token is missing");
-
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.FORBIDDEN.value(), exception.getMessage()), HttpStatus.FORBIDDEN);
         }
     }
 
     @PostMapping("/users/register")
-    public ResponseEntity<?> registerUser(@ModelAttribute appUser appUser, @RequestHeader("language") String language) throws  ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ResponseEntity<?> registerUser(@ModelAttribute appUser appUser, @RequestHeader("language") String language) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-        Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
-        JSONObject error = new JSONObject();
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
 
-        if(!ValidationUtil.checkUsername(appUser.getUsername())){
-            error.put("error", WRONG_USERNAME.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!appUserService.findUser(appUser)){
-            error.put("error", USERNAME_TAKEN.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
+        if (!ValidationUtil.checkUsername(appUser.getUsername()))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_USERNAME.translate(l)), HttpStatus.CONFLICT);
+        if (!appUserService.findUser(appUser))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), USERNAME_TAKEN.translate(l)), HttpStatus.CONFLICT);
+        if (appUser.getPassword() == null || appUser.getPassword().length() == 0)
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_PASSWORD.translate(l)), HttpStatus.CONFLICT);
+        if (appUser.getPassword().length() < ValidationUtil.PASSWORD_MIN_LENGTH)
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORD_TOO_SHORT.translate(l)), HttpStatus.CONFLICT);
+        if (!ValidationUtil.checkPassword(appUser.getPassword()))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORD_TOO_WEAK.translate(l)), HttpStatus.CONFLICT);
+        if (appUser.getPassword().contains(appUser.getUsername()))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORD_CONTAINS_NAME.translate(l)), HttpStatus.CONFLICT);
+        if (!ValidationUtil.checkEmail(appUser.getEmail()))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_EMAIL.translate(l)), HttpStatus.CONFLICT);
+        if (!appUserService.findEmamil(appUser))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), EMAIL_TAKEN.translate(l)), HttpStatus.CONFLICT);
 
-        if (appUser.getPassword()==null || appUser.getPassword().length()==0){
-            error.put("error", WRONG_PASSWORD.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(appUser.getPassword().length()< ValidationUtil.PASSWORD_MIN_LENGTH){
-            error.put("error", PASSWORD_TOO_SHORT.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!ValidationUtil.checkPassword(appUser.getPassword())){
-            error.put("error", PASSWORD_TOO_WEAK.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(appUser.getPassword().contains(appUser.getUsername())){
-            error.put("error", PASSWORD_CONTAINS_NAME.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!ValidationUtil.checkEmail(appUser.getEmail())){
-            error.put("error", WRONG_EMAIL.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!appUserService.findEmamil(appUser)){
-            error.put("error", EMAIL_TAKEN.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
+        appUserService.create(appUser);
 
-        appUser newAppUser = appUserService.create(appUser);
-
-        return  ResponseEntity.ok(newAppUser);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @PostMapping("/users/profile/edit")
-    public ResponseEntity<?> updateProfile(@ModelAttribute appUser appUser, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws  ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ResponseEntity<?> updateProfile(@ModelAttribute appUser appUser, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-        Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
-        JSONObject error = new JSONObject();
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+        appUser user = appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(token));
 
-        pl.sk.photosharingservice.appUser.appUser user = appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(token));
-
-        if(!user.getUsername().equals(appUser.getUsername())) {
-            if (!appUserService.findUser(appUser)) {
-
-                error.put("error", USERNAME_TAKEN.translate(l));
-                return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-            }
+        if (!user.getUsername().equals(appUser.getUsername())) {
+            if (!appUserService.findUser(appUser))
+                return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), USERNAME_TAKEN.translate(l)), HttpStatus.CONFLICT);
         }
 
-        if(!appUserService.findEmamil(appUser)){
-
-            error.put("error", EMAIL_TAKEN.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
+        if (!appUserService.findEmamil(appUser))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), EMAIL_TAKEN.translate(l)), HttpStatus.CONFLICT);
+        if (appUser.getDescription() != null) {
+            if (appUser.getDescription().length() > ValidationUtil.PROFILE_DESCRIPTION_MAX_LENGTH)
+                return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PROFILE_DESCRIPTION_TOO_LONG.translate(l)), HttpStatus.CONFLICT);
         }
 
-        if(appUser.getDescription()!=null) {
-            if (appUser.getDescription().length() > ValidationUtil.PROFILE_DESCRIPTION_MAX_LENGTH) {
-
-                error.put("error", PROFILE_DESCRIPTION_TOO_LONG.translate(l));
-                return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-            }
-        }
-
-        pl.sk.photosharingservice.appUser.appUser nUser = appUserService.editProfile(appUser, AuthUtil.getUsernameFromToken(token));
+        appUser nUser = appUserService.editProfile(appUser, AuthUtil.getUsernameFromToken(token));
         Map<String, String> data = new HashMap<>();
-        data.put("acces_token",AuthUtil.getAccesToken(nUser));
-        data.put("refresh_token",AuthUtil.getRefreshToken(nUser));
+        data.put("acces_token", AuthUtil.getAccesToken(nUser));
+        data.put("refresh_token", AuthUtil.getRefreshToken(nUser));
 
-        return  ResponseEntity.ok(data);
+        return new ResponseEntity(data, HttpStatus.OK);
     }
 
     @PostMapping("users/profile/password/change")
-    public ResponseEntity<?> changePassword( @RequestPart String oldPassword,@RequestPart String newPassword,@RequestPart String confirmPassword,  @RequestHeader("language") String language,@RequestHeader("authorization") String token) throws  ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ResponseEntity<?> changePassword(@RequestPart String oldPassword, @RequestPart String newPassword, @RequestPart String confirmPassword, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
         String username = AuthUtil.getUsernameFromToken(token);
         appUser appUser = appUserService.getUserByUsername(username);
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
 
-        Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
-        JSONObject error = new JSONObject();
-
-        if(!passwordEncoder.matches(oldPassword,appUser.getPassword())){
-            error.put("error", WRONG_PASSWORD.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!newPassword.equals(confirmPassword)){
-            error.put("error", PASSWORDS_DO_NOT_MATCH.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(newPassword.length()< ValidationUtil.PASSWORD_MIN_LENGTH){
-            error.put("error", PASSWORD_TOO_SHORT.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
-        if(!ValidationUtil.checkPassword(newPassword)){
-            error.put("error", PASSWORD_TOO_WEAK.translate(l));
-            return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-        }
+        if (!passwordEncoder.matches(oldPassword, appUser.getPassword()))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_PASSWORD.translate(l)), HttpStatus.CONFLICT);
+        if (!newPassword.equals(confirmPassword))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORDS_DO_NOT_MATCH.translate(l)), HttpStatus.CONFLICT);
+        if (newPassword.length() < ValidationUtil.PASSWORD_MIN_LENGTH)
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORD_TOO_SHORT.translate(l)), HttpStatus.CONFLICT);
+        if (!ValidationUtil.checkPassword(newPassword))
+            return new ResponseEntity(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), PASSWORD_TOO_WEAK.translate(l)), HttpStatus.CONFLICT);
 
         appUserService.changePassword(appUser, newPassword);
-
-        return new ResponseEntity<>( HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @PostMapping("/users/profile/profilePicture")
     public ResponseEntity<?> updateProfile(@RequestBody MultipartFile file, @RequestHeader("authorization") String token) throws IOException {
         appUserService.setUserProfilePic(file, AuthUtil.getUsernameFromToken(token));
-        return new ResponseEntity<>( HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 }
