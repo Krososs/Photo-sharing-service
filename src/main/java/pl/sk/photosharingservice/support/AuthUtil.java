@@ -27,7 +27,7 @@ public class  AuthUtil {
     public static String getRefreshToken(UserDetails appUser) {
         return JWT.create()
                 .withSubject(appUser.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 10000 * 60 * 60 * 100)) //100h
+                .withExpiresAt(new Date(System.currentTimeMillis() + 10000L * 60 * 60 * 100)) //100h
                 .sign(algorithm);
     }
 
