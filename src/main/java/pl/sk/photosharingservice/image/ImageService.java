@@ -25,27 +25,31 @@ public class ImageService {
 
     public void UploadImage(MultipartFile file, String username, String description){
 
-        Image image = new Image(appUserService.getUserIdByUsername(username), file.getOriginalFilename().toString(), description);
+        Image image = new Image(appUserService.getUserIdByUsername(username), file.getOriginalFilename(), description);
         try {
             image.setSource(Base64.getEncoder().encodeToString(file.getBytes()));
         } catch (IOException e) {
             e.printStackTrace();
-
         }
         imageRepository.save(image);
     }
 
-    public boolean deleteImage(Long imageId, String token){
+    public Image getImageById(Long imageId){
+        return imageRepository.getById(imageId);
+    }
 
-        Image image = imageRepository.getById(imageId);
-        Long id = appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token));
+    public boolean imageExists(Long imageId){
+        return imageRepository.existsById(imageId);
+    }
 
-        if(image.getOwnerId().equals(id)) {
-            imageRepository.deleteImageById(imageId);
-            return true;
-        }
-        else
-            return false;
+    public boolean userIsOwner(Long imageId, String username){
+        Long imageOwnerId = imageRepository.getById(imageId).getOwnerId();
+        Long userId = appUserService.getUserIdByUsername(username);
+        return imageOwnerId.equals(userId);
+    }
+
+    public void deleteImageById(Long imageId){
+        imageRepository.deleteById(imageId);
     }
 
     public boolean checkIfLiked(Long userId, Long ImageId){

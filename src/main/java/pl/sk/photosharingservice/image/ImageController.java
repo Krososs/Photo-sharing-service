@@ -1,6 +1,8 @@
 package pl.sk.photosharingservice.image;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +14,11 @@ import pl.sk.photosharingservice.appUser.appUserService;
 import pl.sk.photosharingservice.support.AuthUtil;
 import pl.sk.photosharingservice.support.ValidationUtil;
 import pl.sk.photosharingservice.support.language.Language;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static pl.sk.photosharingservice.support.ResponseUtil.IMAGE_DESCRIPTION_TOO_LONG;
+import java.util.List;
+
+import static pl.sk.photosharingservice.support.ResponseUtil.*;
+import static pl.sk.photosharingservice.support.ValidationUtil.IMAGE_MAX_SIZE;
 
 
 @RestController
@@ -33,58 +36,72 @@ public class ImageController {
     }
 
     @PostMapping("/images/upload")
-    public ResponseEntity<?> uploadImage(@RequestPart MultipartFile file ,@RequestPart String description,@RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        Language l =  (Language)Class.forName("pl.sk.photosharingservice.support.language."+language).newInstance();
+    public ResponseEntity<?> uploadImage(@RequestPart MultipartFile file, @RequestPart String description, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
 
-        if(description!=null) {
-            if (description.length() > ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH) {
-                JSONObject error = new JSONObject();
-                error.put("error", IMAGE_DESCRIPTION_TOO_LONG.translate(l));
-                return new ResponseEntity<>(error.toMap(), HttpStatus.CONFLICT);
-            }
+        if (file.getSize() > IMAGE_MAX_SIZE)
+            return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), IMAGE_SIZE_TOO_LARGE.translate(l)), HttpStatus.CONFLICT);
+        if (description != null) {
+            if (description.length() > ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH)
+                return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), IMAGE_DESCRIPTION_TOO_LONG.translate(l)), HttpStatus.CONFLICT);
         }
         imageService.UploadImage(file, AuthUtil.getUsernameFromToken(token), description);
-        return new ResponseEntity<>( HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/images/like")
-    public ResponseEntity<?> likeImage(@RequestParam String imageId, @RequestHeader("authorization") String token)
-    {
+    public ResponseEntity<?> likeImage(@RequestParam Long imageId, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
 
-        likeService.handleLike(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)),Long.valueOf(imageId));
-        return new ResponseEntity<>( HttpStatus.OK);
+        if (!imageService.imageExists(imageId))
+            return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), IMAGE_DOES_NOT_EXISTS.translate(l)), HttpStatus.CONFLICT);
+
+        likeService.handleLike(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)), imageId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/images/image/likes")
-    public ResponseEntity<?> getUsersWhoLiked(@RequestParam String imageId, @RequestHeader("authorization") String token)
-    {
-        JSONObject imageData = new JSONObject();
-        List<appUser> users =  likeService.getUsersWhoLike(Long.valueOf(imageId));
+    public ResponseEntity<?> getUsersWhoLiked(@RequestParam Long imageId, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+
+        if (!imageService.imageExists(imageId))
+            return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), IMAGE_DOES_NOT_EXISTS.translate(l)), HttpStatus.CONFLICT);
+
+        ObjectNode imageInfo = new ObjectMapper().createObjectNode();
+        ArrayNode _users = imageInfo.putArray("users");
+
+        List<appUser> users = likeService.getUsersWhoLike(imageId);
 
         boolean liked = users.stream()
-                .filter(o -> o.getUsername().equals(AuthUtil.getUsernameFromToken(token)))
-                .findFirst().isPresent();
+                .anyMatch(o -> o.getUsername().equals(AuthUtil.getUsernameFromToken(token)));
 
-        imageData.put("users", users.stream().map(appUser -> appUser.toJson()).collect(Collectors.toList()));
-        imageData.put("liked", liked);
-        return ResponseEntity.ok(imageData.toMap());
+        imageInfo.put("liked", liked);
 
+        for (appUser u : users)
+            _users.add(u.toJson());
+
+        return new ResponseEntity<>(imageInfo, HttpStatus.OK);
     }
 
     @DeleteMapping("/images/delete")
-    public ResponseEntity<?> deleteImage(@RequestParam String imageId, @RequestHeader("authorization") String token)
-    {
-        System.out.println(imageId);
-        if(imageService.deleteImage(Long.valueOf(imageId), token)) {
-            return new ResponseEntity(HttpStatus.OK);
-        }
-        else return new ResponseEntity(HttpStatus.CONFLICT);
+    public ResponseEntity<?> deleteImage(@RequestParam Long imageId, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+
+        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+        String username = AuthUtil.getUsernameFromToken(token);
+
+        if (!imageService.imageExists(imageId))
+            return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), IMAGE_DOES_NOT_EXISTS.translate(l)), HttpStatus.CONFLICT);
+        if (!imageService.userIsOwner(imageId, username))
+            return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), USER_IS_NOT_RIGHT_OWNER.translate(l)), HttpStatus.CONFLICT);
+
+        imageService.deleteImageById(imageId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/images/user")
-    public ResponseEntity<?> getImagesById(@RequestParam String ownerId) {
-        List<Image> images= imageService.getImagesById(Long.valueOf(ownerId));
-        return ResponseEntity.ok(images);
+    public ResponseEntity<?> getImagesById(@RequestParam Long ownerId) {
+        List<Image> images = imageService.getImagesById(ownerId);
+        return new ResponseEntity<>(images, HttpStatus.OK);
     }
 
 

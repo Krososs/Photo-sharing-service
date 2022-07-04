@@ -18,6 +18,9 @@ public class Polish implements Language {
             case PASSWORD_TOO_WEAK -> "Wprowadzone hasło jest zbyt słabe. Poprawne hasło powinno zawierać conajmniej jedną cyfrę, conajmniej jedną wielką literę oraz conajmniej jedną małą literę";
             case WRONG_EMAIL -> "Wprowadzony email jest nieprawidłowy";
             case EMAIL_TAKEN -> "Wprowadzony email jest zajęty";
+            case USER_IS_NOT_RIGHT_OWNER -> "Użytkownik nie jest właścicielem zdjęcia";
+            case IMAGE_SIZE_TOO_LARGE -> "Rozmiar zdjęcia jest zbyt duży";
+            case IMAGE_DOES_NOT_EXISTS -> "Zdjęcie nie istnieje";
             case IMAGE_DESCRIPTION_TOO_LONG -> "Opis może zawierać maksymalnie "+ ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH +" znaków";
             case PROFILE_DESCRIPTION_TOO_LONG -> "Opis może zawierać maksymalnie "+ ValidationUtil.PROFILE_DESCRIPTION_MAX_LENGTH +" znaków";
             case PASSWORDS_DO_NOT_MATCH -> "Hasła nie są identyczne";

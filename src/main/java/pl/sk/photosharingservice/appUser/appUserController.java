@@ -75,17 +75,17 @@ public class appUserController {
         Collections.reverse(userHomePageData);
         for (Image i : userHomePageData) {
 
-            ObjectNode _post = new ObjectMapper().createObjectNode();
+            ObjectNode post = new ObjectMapper().createObjectNode();
 
             appUser owner = appUserService.getUserById(i.getOwnerId()).get();
 
             boolean liked = imageService.checkIfLiked(appUser.getId(), i.getId());
-            _post.put("username", owner.getUsername());
-            _post.put("profilePhoto", owner.getProfilePicture() == null ? null : owner.getProfilePicture());
-            _post.put("liked", liked);
-            _post.put("image", i.toJson());
+            post.put("username", owner.getUsername());
+            post.put("profilePhoto", owner.getProfilePicture() == null ? null : owner.getProfilePicture());
+            post.put("liked", liked);
+            post.put("image", i.toJson());
 
-            posts.add(_post);
+            posts.add(post);
         }
         return ResponseEntity.ok(pageInfo);
     }

@@ -16,6 +16,9 @@ public class English implements Language {
             case PASSWORD_TOO_WEAK -> "Entered password is too weak. Correct password should contain at least one uppercase letter, at least one lowercase letter and at least one number";
             case WRONG_EMAIL -> "Entered email is invalid";
             case EMAIL_TAKEN -> "Entered email is already taken";
+            case IMAGE_SIZE_TOO_LARGE -> "Image size is too large";
+            case USER_IS_NOT_RIGHT_OWNER -> "User is not the right owner";
+            case IMAGE_DOES_NOT_EXISTS -> "Image does not exists";
             case IMAGE_DESCRIPTION_TOO_LONG -> "Description can contain up to "+ ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH +" characters";
             case PROFILE_DESCRIPTION_TOO_LONG -> "Description can contain up to "+ ValidationUtil.PROFILE_DESCRIPTION_MAX_LENGTH +" characters";
             case PASSWORDS_DO_NOT_MATCH -> "Passwords do not match";
