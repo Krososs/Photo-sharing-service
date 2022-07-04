@@ -19,6 +19,7 @@ public class Polish implements Language {
             case WRONG_EMAIL -> "Wprowadzony email jest nieprawidłowy";
             case EMAIL_TAKEN -> "Wprowadzony email jest zajęty";
             case USER_IS_NOT_RIGHT_OWNER -> "Użytkownik nie jest właścicielem zdjęcia";
+            case USER_DOES_NOT_EXISTS -> "Dany użytkownik nie istnieje";
             case IMAGE_SIZE_TOO_LARGE -> "Rozmiar zdjęcia jest zbyt duży";
             case IMAGE_DOES_NOT_EXISTS -> "Zdjęcie nie istnieje";
             case IMAGE_DESCRIPTION_TOO_LONG -> "Opis może zawierać maksymalnie "+ ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH +" znaków";

@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import pl.sk.photosharingservice.appUser.appUserService;
-import pl.sk.photosharingservice.support.AuthUtil;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -20,10 +19,9 @@ public class ImageService {
     public ImageService(ImageRepository imageRepository, appUserService appUserService) {
         this.imageRepository = imageRepository;
         this.appUserService = appUserService;
-
     }
 
-    public void UploadImage(MultipartFile file, String username, String description){
+    public void UploadImage(MultipartFile file, String username, String description) {
 
         Image image = new Image(appUserService.getUserIdByUsername(username), file.getOriginalFilename(), description);
         try {
@@ -34,31 +32,30 @@ public class ImageService {
         imageRepository.save(image);
     }
 
-    public Image getImageById(Long imageId){
+    public Image getImageById(Long imageId) {
         return imageRepository.getById(imageId);
     }
 
-    public boolean imageExists(Long imageId){
+    public boolean imageExists(Long imageId) {
         return imageRepository.existsById(imageId);
     }
 
-    public boolean userIsOwner(Long imageId, String username){
+    public boolean userIsOwner(Long imageId, String username) {
         Long imageOwnerId = imageRepository.getById(imageId).getOwnerId();
         Long userId = appUserService.getUserIdByUsername(username);
         return imageOwnerId.equals(userId);
     }
 
-    public void deleteImageById(Long imageId){
+    public void deleteImageById(Long imageId) {
         imageRepository.deleteById(imageId);
     }
 
-    public boolean checkIfLiked(Long userId, Long ImageId){
+    public boolean checkIfLiked(Long userId, Long ImageId) {
         return imageRepository.checkIfLiked(userId, ImageId).isPresent();
     }
 
-    public List<Image> getImagesById(Long id){
+    public List<Image> getImagesById(Long id) {
         return imageRepository.findByOwnerId(id);
     }
-
 
 }

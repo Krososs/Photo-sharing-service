@@ -119,7 +119,6 @@ public class appUserService implements UserDetailsService {
         return false;
     }
 
-    //check if email is taken
     public boolean findEmamil(appUser appUser) {
         if (appUser.getEmail() == null || appUserRepository.findByEmail(appUser.getEmail()) == null)
             return true;

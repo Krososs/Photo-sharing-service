@@ -18,6 +18,7 @@ public class English implements Language {
             case EMAIL_TAKEN -> "Entered email is already taken";
             case IMAGE_SIZE_TOO_LARGE -> "Image size is too large";
             case USER_IS_NOT_RIGHT_OWNER -> "User is not the right owner";
+            case USER_DOES_NOT_EXISTS -> "User does not exists";
             case IMAGE_DOES_NOT_EXISTS -> "Image does not exists";
             case IMAGE_DESCRIPTION_TOO_LONG -> "Description can contain up to "+ ValidationUtil.IMAGE_DESCRIPTION_MAX_LENGTH +" characters";
             case PROFILE_DESCRIPTION_TOO_LONG -> "Description can contain up to "+ ValidationUtil.PROFILE_DESCRIPTION_MAX_LENGTH +" characters";

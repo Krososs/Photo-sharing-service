@@ -103,6 +103,4 @@ public class ImageController {
         List<Image> images = imageService.getImagesById(ownerId);
         return new ResponseEntity<>(images, HttpStatus.OK);
     }
-
-
 }
