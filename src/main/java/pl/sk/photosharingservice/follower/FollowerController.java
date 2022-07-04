@@ -23,24 +23,21 @@ public class FollowerController {
     }
 
     @PostMapping("/users/follow")
-    public ResponseEntity<?> follow(@RequestParam(name = "targetId") String targetId,@RequestHeader("authorization") String token) {
+    public ResponseEntity<?> follow(@RequestParam(name = "targetId") String targetId, @RequestHeader("authorization") String token) {
         String username = AuthUtil.getUsernameFromToken(token);
-        followerService.handleFollow(appUserService.getUserIdByUsername(username),Long.valueOf(targetId));
-        return new ResponseEntity<>( HttpStatus.OK);
+        followerService.handleFollow(appUserService.getUserIdByUsername(username), Long.valueOf(targetId));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/users/followers")
     public ResponseEntity<?> getFollowers(@RequestHeader("authorization") String token) throws JsonProcessingException {
-
         List<Follower> followers = followerService.getFollowers(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)));
-        return ResponseEntity.ok(followers.toArray());
-
+        return new ResponseEntity<>(followers,HttpStatus.OK);
     }
+
     @GetMapping("/users/following")
     public ResponseEntity<?> getFollowing(@RequestHeader("authorization") String token) throws JsonProcessingException {
-
         List<Follower> followers = followerService.getFollowing(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)));
         return ResponseEntity.ok(followers.toArray());
     }
-
 }
