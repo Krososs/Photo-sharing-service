@@ -11,14 +11,12 @@ public record ValidationUtil() {
     public static final int PASSWORD_MIN_LENGTH = 5;
     public static final int PROFILE_DESCRIPTION_MAX_LENGTH = 150;
     public static final int IMAGE_DESCRIPTION_MAX_LENGTH = 2200;
-    public static final int IMAGE_MAX_SIZE = 10000000;
+    public static final int IMAGE_MAX_SIZE = 10485760;
     private static final String EMAIL_PATTERN = ".+@.+\\..+";
     private static final String PASSWORD_PATTERN = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{5,}$";
 
     public static boolean checkUsername(String username) {
-        if (username == null || username.length() == 0)
-            return false;
-        return true;
+        return username != null && username.length() != 0;
     }
 
     public static boolean checkPassword(String password) {
@@ -35,9 +33,7 @@ public record ValidationUtil() {
         Pattern pattern = Pattern.compile(EMAIL_PATTERN);
         Matcher matcher = pattern.matcher(email);
 
-        if (!matcher.matches() || email.length() == 0)
-            return false;
-        return true;
+        return matcher.matches() && email.length() != 0;
     }
 
     public static ObjectNode getErrorResponse(Integer status, String message) {
@@ -46,6 +42,5 @@ public record ValidationUtil() {
                 .put("status", status)
                 .put("message", message);
     }
-
 
 }

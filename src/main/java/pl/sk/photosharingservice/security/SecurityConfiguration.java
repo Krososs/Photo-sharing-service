@@ -17,7 +17,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import pl.sk.photosharingservice.filter.AuthenticationFilter;
 import pl.sk.photosharingservice.filter.AuthorizationFilter;
-import pl.sk.photosharingservice.appUser.appUserService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -28,8 +27,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Autowired
-    private final appUserService appUserService;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception{
@@ -54,7 +51,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers("/********").hasAnyAuthority("ROLE_USER");
         http.authorizeRequests().antMatchers("/********").hasAnyAuthority("ROLE_ADMIN");
         http.authorizeRequests().anyRequest().authenticated();
-        http.addFilter(new AuthenticationFilter(authenticationManagerBean(), appUserService));
+        http.addFilter(new AuthenticationFilter(authenticationManagerBean()));
         http.addFilterBefore(new AuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
     @Bean
