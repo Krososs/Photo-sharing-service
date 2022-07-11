@@ -17,12 +17,6 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     @Transactional
     @Query(value="SELECT l FROM Like l WHERE l.userId = :userId AND l.imageId = :imageId")
     Optional<Image> checkIfLiked(@Param("userId") Long userId,@Param("imageId")Long imageId);
-
-    @Modifying
-    @Transactional
-    @Query(value="DELETE FROM Image i WHERE i.id = :imageId")
-    void deleteImageById(@Param("imageId") Long imageId);
-
-    void deleteById(Long id);
     List<Image> findByOwnerId(Long id);
+    void deleteById(Long id);
 }

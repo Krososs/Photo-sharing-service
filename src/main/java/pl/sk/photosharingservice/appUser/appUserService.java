@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -93,13 +94,15 @@ public class appUserService implements UserDetailsService {
         if (appUser.getEmail() != null) {
             user.setEmail(appUser.getEmail());
         }
+        if(appUser.getLanguage()!=null){
+            user.setLanguage(appUser.getLanguage());
+        }
         if (appUser.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(appUser.getPassword()));
         }
         appUserRepository.save(user);
         return user;
     }
-
 
     public void setUserProfilePic(MultipartFile file, String username) throws IOException {
         appUser appUser = appUserRepository.findByUsername(username);
@@ -133,7 +136,7 @@ public class appUserService implements UserDetailsService {
         } else {
             Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority(appUser.getRole()));
-            return new org.springframework.security.core.userdetails.User(appUser.getUsername(), appUser.getPassword(), authorities);
+            return new User(appUser.getUsername(), appUser.getPassword(), authorities);
         }
     }
 }

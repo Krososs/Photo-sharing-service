@@ -7,6 +7,9 @@ import org.hibernate.annotations.Formula;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import pl.sk.photosharingservice.support.language.English;
+import pl.sk.photosharingservice.support.language.Language;
+import pl.sk.photosharingservice.support.language.Polish;
 
 import javax.persistence.*;
 import java.util.Collection;
@@ -41,6 +44,7 @@ public class appUser implements UserDetails {
     private String role;
     private String profilePicture;
     private String description;
+    private String language;
 
     public appUser() {
 
@@ -56,6 +60,14 @@ public class appUser implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singleton(new SimpleGrantedAuthority(role));
+    }
+
+    public Language getUserLanguage() {
+        return switch (this.language) {
+            case "English" -> new English();
+            case "Polish" -> new Polish();
+            default -> new English();
+        };
     }
 
     public ObjectNode toJson() {

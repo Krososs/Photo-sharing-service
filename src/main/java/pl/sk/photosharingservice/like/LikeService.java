@@ -24,34 +24,27 @@ public class LikeService {
         this.appUserService = appUserService;
     }
 
-    public void handleLike(Long userId, Long imageId){
+    public void handleLike(Long userId, Long imageId) {
 
-        if(imageRepository.findById(imageId).isPresent()){
+        if (imageRepository.findById(imageId).isPresent()) {
 
-            if(!imageRepository.checkIfLiked(userId, imageId).isPresent())
+            if (!imageRepository.checkIfLiked(userId, imageId).isPresent())
                 likeRepository.save(new Like(userId, imageId));
             else
                 likeRepository.Unlike(userId, imageId);
         }
-
     }
 
-    //get users who like image with present id
-    public List<appUser> getUsersWhoLike(Long imageId){
-        
+    public List<appUser> getUsersWhoLike(Long imageId) {
+
         List<Like> likes = likeRepository.findByImageId(imageId);
         List<appUser> users = new ArrayList<>();
 
         likes.forEach(like -> {
-            if(appUserService.getUserById(like.getUserId()).isPresent())
+            if (appUserService.getUserById(like.getUserId()).isPresent())
                 users.add(appUserService.getUserById(like.getUserId()).get());
         });
 
         return users;
     }
-
-    public boolean checkIfLiked(){
-        return true;
-    }
-
 }

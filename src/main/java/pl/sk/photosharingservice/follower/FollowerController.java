@@ -27,10 +27,9 @@ public class FollowerController {
     }
 
     @PostMapping("/users/follow")
-    public ResponseEntity<?> follow(@RequestParam Long targetId, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+    public ResponseEntity<?> follow(@RequestParam Long targetId, @RequestHeader("authorization") String token){
+        Language l = appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(token)).getUserLanguage();
         String username = AuthUtil.getUsernameFromToken(token);
-
         if (!appUserService.getUserById(targetId).isPresent())
             return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), USER_DOES_NOT_EXISTS.translate(l)), HttpStatus.CONFLICT);
 
@@ -39,13 +38,13 @@ public class FollowerController {
     }
 
     @GetMapping("/users/followers")
-    public ResponseEntity<?> getFollowers(@RequestHeader("authorization") String token) throws JsonProcessingException {
+    public ResponseEntity<?> getFollowers(@RequestHeader("authorization") String token){
         List<Follower> followers = followerService.getFollowers(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)));
         return new ResponseEntity<>(followers, HttpStatus.OK);
     }
 
     @GetMapping("/users/following")
-    public ResponseEntity<?> getFollowing(@RequestHeader("authorization") String token) throws JsonProcessingException {
+    public ResponseEntity<?> getFollowing(@RequestHeader("authorization") String token){
         List<Follower> following = followerService.getFollowing(appUserService.getUserIdByUsername(AuthUtil.getUsernameFromToken(token)));
         return new ResponseEntity<>(following, HttpStatus.OK);
     }

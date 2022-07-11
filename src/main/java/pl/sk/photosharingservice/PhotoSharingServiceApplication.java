@@ -9,14 +9,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @SpringBootApplication
 public class PhotoSharingServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PhotoSharingServiceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PhotoSharingServiceApplication.class, args);
+    }
 
-	@Bean
-	PasswordEncoder passwordEncoder(){
-		return  new BCryptPasswordEncoder();
-	}
-
-
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

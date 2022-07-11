@@ -14,6 +14,7 @@ import pl.sk.photosharingservice.image.Image;
 import pl.sk.photosharingservice.follower.FollowerService;
 import pl.sk.photosharingservice.image.ImageService;
 import pl.sk.photosharingservice.support.*;
+import pl.sk.photosharingservice.support.language.English;
 import pl.sk.photosharingservice.support.language.Language;
 
 import java.io.IOException;
@@ -45,8 +46,10 @@ public class appUserController {
         String username = AuthUtil.getUsernameFromToken(token);
         appUser appUser = appUserService.getUserByUsername(username);
 
-        userInfo.put("username", appUser.getUsername());
         userInfo.put("id", appUser.getId());
+        userInfo.put("username", appUser.getUsername());
+        userInfo.put("role", appUser.getRole());
+        userInfo.put("language", appUser.getLanguage());
         userInfo.put("profilePicture", appUser.getProfilePicture());
 
         return new ResponseEntity<>(userInfo, HttpStatus.OK);
@@ -119,7 +122,8 @@ public class appUserController {
     @PostMapping("/users/register")
     public ResponseEntity<?> registerUser(@ModelAttribute appUser appUser, @RequestHeader("language") String language) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+        appUser.setLanguage(language);
+        Language l = appUser.getUserLanguage();
 
         if (!ValidationUtil.checkUsername(appUser.getUsername()))
             return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_USERNAME.translate(l)), HttpStatus.CONFLICT);
@@ -144,9 +148,9 @@ public class appUserController {
     }
 
     @PatchMapping("/users/profile/edit")
-    public ResponseEntity<?> updateProfile(@ModelAttribute appUser appUser, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ResponseEntity<?> updateProfile(@ModelAttribute appUser appUser, @RequestHeader("authorization") String token){
 
-        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+        Language l = appUser.getUserLanguage();
         appUser user = appUserService.getUserByUsername(AuthUtil.getUsernameFromToken(token));
 
         if (!user.getUsername().equals(appUser.getUsername())) {
@@ -170,11 +174,11 @@ public class appUserController {
     }
 
     @PatchMapping("users/profile/password/change")
-    public ResponseEntity<?> changePassword(@RequestPart String oldPassword, @RequestPart String newPassword, @RequestPart String confirmPassword, @RequestHeader("language") String language, @RequestHeader("authorization") String token) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ResponseEntity<?> changePassword(@RequestPart String oldPassword, @RequestPart String newPassword, @RequestPart String confirmPassword, @RequestHeader("authorization") String token){
 
         String username = AuthUtil.getUsernameFromToken(token);
         appUser appUser = appUserService.getUserByUsername(username);
-        Language l = (Language) Class.forName("pl.sk.photosharingservice.support.language." + language).newInstance();
+        Language l = appUser.getUserLanguage();
 
         if (!passwordEncoder.matches(oldPassword, appUser.getPassword()))
             return new ResponseEntity<>(ValidationUtil.getErrorResponse(HttpStatus.CONFLICT.value(), WRONG_PASSWORD.translate(l)), HttpStatus.CONFLICT);

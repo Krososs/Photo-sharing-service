@@ -9,12 +9,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import pl.sk.photosharingservice.support.AuthUtil;
 import pl.sk.photosharingservice.support.ValidationUtil;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -25,15 +27,15 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        if(request.getServletPath().equals("/login") ||  request.getServletPath().equals("/users/register") || request.getServletPath().equals("/users/token/refresh") ){
-            filterChain.doFilter(request,response);
-        }else{
+        if (request.getServletPath().equals("/login") || request.getServletPath().equals("/users/register") || request.getServletPath().equals("/users/token/refresh")) {
+            filterChain.doFilter(request, response);
+        } else {
             String authHeader = request.getHeader(AUTHORIZATION);
-            if(authHeader!=null){
-                try{
+            if (authHeader != null) {
+                try {
                     DecodedJWT jwt = JWT.decode(authHeader);
 
-                    if( jwt.getExpiresAt().before(new Date())) {
+                    if (jwt.getExpiresAt().before(new Date())) {
                         response.setContentType(APPLICATION_JSON_VALUE);
                         response.setStatus(UNAUTHORIZED.value());
                         new ObjectMapper().writeValue(response.getOutputStream(), ValidationUtil.getErrorResponse(UNAUTHORIZED.value(), "Token is expired"));
@@ -41,17 +43,17 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     authorities.add(new SimpleGrantedAuthority(AuthUtil.getRolesFromToken(authHeader)));
-                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwt.getSubject(),null, authorities);
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwt.getSubject(), null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request, response);
 
-                }catch (Exception exception){
+                } catch (Exception exception) {
                     response.setContentType(APPLICATION_JSON_VALUE);
                     response.setStatus(FORBIDDEN.value());
                     new ObjectMapper().writeValue(response.getOutputStream(), ValidationUtil.getErrorResponse(UNAUTHORIZED.value(), exception.getMessage()));
                 }
 
-            }else{
+            } else {
                 filterChain.doFilter(request, response);
 
             }

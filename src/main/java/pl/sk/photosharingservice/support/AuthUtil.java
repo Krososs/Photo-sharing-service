@@ -10,16 +10,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-public class  AuthUtil {
+public class AuthUtil {
 
     private final static Algorithm algorithm = Algorithm.HMAC256("secrect".getBytes());
     private final static JWTVerifier verifier = JWT.require(algorithm).build();
 
-    public static String getAccesToken(UserDetails appUser){
-
+    public static String getAccesToken(UserDetails appUser) {
         return JWT.create()
                 .withSubject(appUser.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis()+1000*60*60*16)) //16h
+                .withExpiresAt(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 16)) //16h
                 .withClaim("roles", appUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining()))
                 .sign(algorithm);
     }
@@ -31,16 +30,14 @@ public class  AuthUtil {
                 .sign(algorithm);
     }
 
-    public static String getUsernameFromToken(String token){
+    public static String getUsernameFromToken(String token) {
         DecodedJWT decodedJWT = verifier.verify(token);
         return decodedJWT.getSubject();
     }
 
-    public static String getRolesFromToken(String token){
+    public static String getRolesFromToken(String token) {
         DecodedJWT decodedJWT = verifier.verify(token);
         return decodedJWT.getClaim("roles").toString();
     }
-
-
 
 }

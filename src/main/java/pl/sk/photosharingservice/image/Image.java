@@ -4,18 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.*;
 import org.hibernate.annotations.Formula;
+
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name="images")
+@Table(name = "images")
 @Data
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NonNull
-    @Column(name="ownerId")
+    @Column(name = "ownerId")
     private Long ownerId;
     @NonNull
     private String source;
@@ -29,17 +30,18 @@ public class Image {
 
     private String description;
 
-    public Image(Long ownerId, String name, String description ){
-        this.ownerId =ownerId;
-        this.name=name;
-        this.description=description;
-        this.likes=0;
-        this.releaseDate= new Date();
+    public Image(Long ownerId, String name, String description) {
+        this.ownerId = ownerId;
+        this.name = name;
+        this.description = description;
+        this.likes = 0;
+        this.releaseDate = new Date();
     }
 
-    public Image(){}
+    public Image() {
+    }
 
-    public ObjectNode toJson(){
+    public ObjectNode toJson() {
         return new ObjectMapper().createObjectNode()
                 .put("id", this.id)
                 .put("ownerId", this.ownerId)

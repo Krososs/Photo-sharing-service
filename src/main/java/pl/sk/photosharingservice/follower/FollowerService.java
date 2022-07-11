@@ -15,21 +15,24 @@ public class FollowerService {
         this.followerRepository = followerRepository;
     }
 
-    public Boolean checkIfFollowed(Long userId, Long targetId){
+    public Boolean checkIfFollowed(Long userId, Long targetId) {
 
         return followerRepository.checkIfFollowed(userId, targetId).isPresent();
     }
 
-    public void handleFollow(Long userId, Long targetId){
+    public void handleFollow(Long userId, Long targetId) {
 
-        if(!followerRepository.checkIfFollowed(userId, targetId).isPresent())
+        if (!followerRepository.checkIfFollowed(userId, targetId).isPresent())
             followerRepository.save(new Follower(userId, targetId));
         else
-            followerRepository.Unfollow(userId,targetId);
+            followerRepository.Unfollow(userId, targetId);
     }
 
-    public List<Follower> getFollowing(Long id){ return followerRepository.findByUserId(id); }
-    public List<Follower> getFollowers(Long id){ return followerRepository.findByTargetId(id); }
+    public List<Follower> getFollowing(Long id) {
+        return followerRepository.findByUserId(id);
+    }
 
-
+    public List<Follower> getFollowers(Long id) {
+        return followerRepository.findByTargetId(id);
+    }
 }

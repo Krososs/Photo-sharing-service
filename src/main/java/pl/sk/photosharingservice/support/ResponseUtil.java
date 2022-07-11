@@ -21,7 +21,7 @@ public enum ResponseUtil {
     EMAIL_TAKEN,
     USERNAME_TAKEN;
 
-    public String translate(Language language){
+    public String translate(Language language) {
         return language.translate(this);
     }
 
